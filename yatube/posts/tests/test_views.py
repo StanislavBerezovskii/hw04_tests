@@ -38,13 +38,15 @@ class PagesTests(TestCase):
         """URL-адрес использует соответствующий шаблон."""
         templates_pages_names = {
             reverse('posts:index'): 'posts/index.html',
-            reverse('posts:group_list', kwargs={'slug': 'test-slug'}): 
+            reverse('posts:group_list', kwargs={'slug': 'test-slug'}):
             'posts/group_list.html',
             reverse('posts:profile', kwargs={'username': 'TestUser'}):
             'posts/profile.html',
-            reverse('posts:post_detail', kwargs={'post_id': f'{self.post.id}'}):
+            reverse(
+                'posts:post_detail', kwargs={'post_id': f'{self.post.id}'}):
             'posts/post_detail.html',
-            reverse('posts:post_edit', kwargs={'post_id': f'{self.post.id}'}):
+            reverse(
+                'posts:post_edit', kwargs={'post_id': f'{self.post.id}'}):
             'posts/create_post.html',
             reverse('posts:post_create'): 'posts/create_post.html',
         }
