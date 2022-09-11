@@ -31,7 +31,8 @@ class PagesTests(TestCase):
             reverse('posts:index'): 'posts/index.html',
             reverse('posts:group_list', kwargs={'slug': f'{cls.group.slug}'}):
             'posts/group_list.html',
-            reverse('posts:profile', kwargs={'username': f'{cls.user.username}'}):
+            reverse('posts:profile',
+                    kwargs={'username': f'{cls.user.username}'}):
             'posts/profile.html',
             reverse(
                 'posts:post_detail', kwargs={'post_id': f'{cls.post.id}'}):
