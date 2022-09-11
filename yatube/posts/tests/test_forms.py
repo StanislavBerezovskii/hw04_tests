@@ -1,7 +1,6 @@
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from ..forms import PostForm
 from ..models import Post, Group, User
 
 
@@ -20,7 +19,6 @@ class PostFormTests(TestCase):
             text='Тестовый текст',
             group=cls.group,
         )
-        cls.form = PostForm()
 
     def setUp(self):
         self.authorized_client = Client()
@@ -29,6 +27,7 @@ class PostFormTests(TestCase):
     def test_create_post(self):
         post_count = Post.objects.count()
         form_data = {
+            'author': self.user,
             'group': self.group.pk,
             'text': 'Тестовый текст',
         }
@@ -40,8 +39,13 @@ class PostFormTests(TestCase):
         self.assertRedirects(response, reverse('posts:profile',
                              kwargs={'username': self.post.author.username}))
         self.assertEqual(Post.objects.count(), post_count + 1)
+        added_post = Post.objects.first()
+        self.assertEqual(added_post.text, form_data['text'])
+        self.assertEqual(added_post.group.pk, form_data['group'])
+        self.assertEqual(added_post.author, self.user)
 
     def test_edit_post(self):
+        post_count = Post.objects.count()
         new_group = Group.objects.create(
             title='Новая тестовая группа',
             slug='new-test-slug',
@@ -58,6 +62,16 @@ class PostFormTests(TestCase):
         )
         self.assertRedirects(response, reverse('posts:post_detail',
                              kwargs={'post_id': self.post.id}))
-        new_version = Post.objects.filter(id=self.post.id)[0]
-        self.assertEqual(new_version.text, 'Новый тестовый текст')
+        new_version = Post.objects.get(id=self.post.id)
+        self.assertEqual(new_version.text, form_data['text'])
         self.assertEqual(new_version.group, new_group)
+        guest_client = Client()
+        response = guest_client.post(
+            reverse('posts:post_edit', kwargs={'post_id': f'{self.post.id}'}),
+            data=form_data,
+            follow=True
+        )
+        self.assertRedirects(response, reverse('users:login') + '?next='
+                             + reverse('posts:post_edit',
+                             kwargs={'post_id': f'{self.post.id}'}))
+        self.assertEqual(Post.objects.count(), post_count)
