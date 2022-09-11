@@ -1,6 +1,8 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase, Client
 
+from http import HTTPStatus as h
+
 from ..models import Post, Group
 
 User = get_user_model()
@@ -48,7 +50,7 @@ class URLTests(TestCase):
         for url in self.url_list[0:4]:
             with self.subTest(url=url):
                 response = self.guest_client.get(url)
-                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.status_code, h.OK)
 
     def test_restricted_access_pages(self):
         """Страницы /create/ и /posts/<post_id>/edit/>
@@ -56,7 +58,7 @@ class URLTests(TestCase):
         for url in self.url_list[5:6]:
             with self.subTest(url=url):
                 response = self.authorized_client.get(url)
-                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.status_code, h.OK)
 
     def test_restricted_access_pages_redirect(self):
         """Страницы /create/ и /posts/<post_id>/edit/> перенаправляют
@@ -89,4 +91,4 @@ class URLTests(TestCase):
         """При запросе неусществующего URL-адреса происходит ошибка 404."""
         url = '/unexisting_page/'
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, h.NOT_FOUND)
