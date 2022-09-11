@@ -21,6 +21,17 @@ class URLTests(TestCase):
             text='Тестовый текст',
             author=cls.user
         )
+        cls.templates_url_names = {
+            '/': 'posts/index.html',
+            f'/group/{cls.group.slug}/': 'posts/group_list.html',
+            f'/profile/{cls.post.author}/': 'posts/profile.html',
+            f'/posts/{cls.post.id}/': 'posts/post_detail.html',
+            '/create/': 'posts/create_post.html',
+            f'/posts/{cls.post.id}/edit/': 'posts/create_post.html',
+        }
+        cls.url_list = []
+        for key in cls.templates_url_names.keys():
+            cls.url_list.append(key)
 
     def setUp(self):
         # Создаем неавторизованный клиент
@@ -34,13 +45,7 @@ class URLTests(TestCase):
     def test_free_access_pages(self):
         """Страницы /, /group/<slug>/, /profile/<username>/ и /posts/<post_id>
         доступны любому пользователю."""
-        free_access_url_list = [
-            '/',
-            f'/group/{self.group.slug}/',
-            f'/profile/{self.post.author}/',
-            f'/posts/{self.post.id}/'
-        ]
-        for url in free_access_url_list:
+        for url in self.url_list[0:4]:
             with self.subTest(url=url):
                 response = self.guest_client.get(url)
                 self.assertEqual(response.status_code, 200)
@@ -48,11 +53,7 @@ class URLTests(TestCase):
     def test_restricted_access_pages(self):
         """Страницы /create/ и /posts/<post_id>/edit/>
         доступны только авторизованным пользователям."""
-        restricted_access_url_list = [
-            '/create/',
-            f'/posts/{self.post.id}/edit/'
-        ]
-        for url in restricted_access_url_list:
+        for url in self.url_list[5:6]:
             with self.subTest(url=url):
                 response = self.authorized_client.get(url)
                 self.assertEqual(response.status_code, 200)
@@ -60,11 +61,7 @@ class URLTests(TestCase):
     def test_restricted_access_pages_redirect(self):
         """Страницы /create/ и /posts/<post_id>/edit/> перенаправляют
         неавторизованных пользователей на страницу авторизации."""
-        restricted_access_url_list = [
-            '/create/',
-            f'/posts/{self.post.id}/edit/'
-        ]
-        for url in restricted_access_url_list:
+        for url in self.url_list[5:6]:
             with self.subTest(url=url):
                 response = self.guest_client.get(url, follow=True)
                 self.assertRedirects(response, f'/auth/login/?next={url}')
@@ -83,16 +80,7 @@ class URLTests(TestCase):
 
     def test_urls_use_correct_templates(self):
         """URL-адрес использует соответствующий шаблон."""
-        # Шаблоны по адресам
-        templates_url_names = {
-            '/': 'posts/index.html',
-            f'/group/{self.group.slug}/': 'posts/group_list.html',
-            f'/profile/{self.post.author}/': 'posts/profile.html',
-            f'/posts/{self.post.id}/': 'posts/post_detail.html',
-            '/create/': 'posts/create_post.html',
-            f'/posts/{self.post.id}/edit/': 'posts/create_post.html',
-        }
-        for address, template in templates_url_names.items():
+        for address, template in self.templates_url_names.items():
             with self.subTest(address=address):
                 response = self.authorized_client.get(address)
                 self.assertTemplateUsed(response, template)
