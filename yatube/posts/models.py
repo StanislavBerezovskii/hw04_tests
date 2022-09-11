@@ -5,9 +5,14 @@ User = get_user_model()
 
 
 class Group(models.Model):
-    title = models.CharField(verbose_name='Название', max_length=200)
-    slug = models.SlugField(verbose_name='URL-Адрес', unique=True)
-    description = models.TextField(verbose_name='Описание')
+    title = models.CharField(verbose_name='Название',
+                             help_text='Введите название группы',
+                             max_length=200)
+    slug = models.SlugField(verbose_name='URL-Адрес',
+                            help_text='Введите URL-адрес группы',
+                            unique=True)
+    description = models.TextField(verbose_name='Описание',
+                                   help_text='Введите описание группы')
 
     def __str__(self):
         return self.title
@@ -15,7 +20,7 @@ class Group(models.Model):
 
 class Post(models.Model):
     text = models.TextField(
-        verbose_name='Текст', help_text='Подсказка для админа',)
+        verbose_name='Текст', help_text='Введите текст поста',)
     pub_date = models.DateTimeField(
         verbose_name='Дата публикации', auto_now_add=True)
 
@@ -31,7 +36,7 @@ class Post(models.Model):
         null=True,
         on_delete=models.SET_NULL,
         related_name='posts',
-        help_text='Подсказка для админа',
+        help_text='Укажите группу для поста',
         verbose_name='Группа, к которой будет относиться пост'
     )
 
