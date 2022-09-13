@@ -19,7 +19,7 @@
             {% endif %}
           </div>
           <div class="card-body">
-            <form method="post"
+            <form method="post" enctype="multipart/form-data"
               {% if is_edit %}
                 action="{% url 'posts:post_edit' post.id %}"
               {% else %}
@@ -27,26 +27,27 @@
               {% endif %}
             >
               {% csrf_token %}
-              <div class="fieldWrapper">
-                {{ form.errors.required }}
-                {% if is_edit %}
-                  <p>
-                    {{ post }}
-                  </p>
-                {% endif %}
-                {{ form.text.label }}
-                  <p>
-                    {{ form.text }}
-                  </p>
-                {% if form.text.help_text %}
-                  <p class="help">
-                    {{ form.text.help_text|safe }}
-                  </p>
-                {% endif %}
-                {{ form.group.label }}
-                  <p>
-                    {{ form.group }}
-                  </p>
+              <div class="form-group row my-3 p-3">
+                <div class="fieldWrapper">
+                  {{ form.errors.required }}
+                  {% if is_edit %}
+                    <p>
+                      {{ post }}
+                    </p>
+                  {% endif %}
+                  {{ form.text.label }}
+                    <p>
+                      {{ form.text }}
+                    </p>
+                  {% if form.text.help_text %}
+                    <p class="help">
+                      {{ form.text.help_text|safe }}
+                    </p>
+                  {% endif %}
+                  {{ form.group.label }}
+                    <p>
+                      {{ form.group }}
+                    </p>
                 {% comment %}
                 <select name="group" class="form-control" id="id_group">
                   {% for group in form.group %}
@@ -54,11 +55,21 @@
                   {% endfor %}
                 </select>
                 {% endcomment %}
-                {% if form.group.help_text %}
-                  <p class="help">
-                    {{ form.group.help_text|safe }}
-                  </p>
-                {% endif %}
+                  {% if form.group.help_text %}
+                    <p class="help">
+                      {{ form.group.help_text|safe }}
+                    </p>
+                  {% endif %}
+                  {{ form.image.label }}
+                    <p>
+                      {{ form.image }}
+                    </p>
+                  {% if form.image.help_text %}
+                    <p class="help">
+                      {{ form.image.help_text|safe }}
+                    </p>
+                  {% endif %}
+                </div>
               </div>
               <div class="d-flex justify-content-end">
                 <button type="submit" class="btn btn-primary">
