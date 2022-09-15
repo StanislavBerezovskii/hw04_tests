@@ -1,7 +1,12 @@
 from django.contrib.auth import get_user_model
-from django.test import TestCase, Client
+from django.test import TestCase, Client, override_settings
+from django.conf import settings
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from django.conf import settings as s
+
+import shutil
+import tempfile
 
 import math
 
@@ -10,7 +15,10 @@ from ..forms import PostForm
 
 User = get_user_model()
 
+TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
+
+@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class PagesTests(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -25,7 +33,8 @@ class PagesTests(TestCase):
         cls.post = Post.objects.create(
             text='Тестовый текст',
             author=cls.user,
-            group=cls.group
+            group=cls.group,
+            image=''
         )
         cls.index_reverse = reverse('posts:index')
         cls.group_reverse = reverse('posts:group_list',
@@ -51,10 +60,34 @@ class PagesTests(TestCase):
                               'posts/create_post.html',
                               'posts/create_post.html']
 
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
+
     def setUp(self):
         self.guest_client = Client()
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
+        small_gif = (
+            b'\x47\x49\x46\x38\x39\x61\x02\x00'
+            b'\x01\x00\x80\x00\x00\x00\x00\x00'
+            b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+            b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+            b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+            b'\x0A\x00\x3B'
+        )
+        self.uploaded = SimpleUploadedFile(
+            name='small.gif',
+            content=small_gif,
+            content_type='image/gif'
+        )
+        self.form_data = {
+            'text': 'Новый тестовый текст',
+            'group': self.group.pk,
+            'author': self.user,
+            'image': self.uploaded,
+        }
 
     def _get_first_object_(self, response):
         first_object = response.context.get('page_obj').object_list[0]
@@ -62,6 +95,7 @@ class PagesTests(TestCase):
             first_object.text: self.post.text,
             first_object.author: self.user,
             first_object.group: self.group,
+            first_object.image: f'posts/{self.uploaded}',
         }
         return first_object_fields
 
@@ -79,21 +113,21 @@ class PagesTests(TestCase):
         response = self.authorized_client.get(self.index_reverse)
         for item, expected in self._get_first_object_(response).items():
             with self.subTest(item=item):
-                self.assertEqual(item, expected)
+                return self.assertEqual(item, expected)
 
     def test_group_list_page_shows_correct_context(self):
         """Шаблон group_list сформирован с правильным контекстом."""
         response = self.authorized_client.get(self.group_reverse)
         for item, expected in self._get_first_object_(response).items():
             with self.subTest(item=item):
-                self.assertEqual(item, expected)
+                return self.assertEqual(item, expected)
 
     def test_profile_page_shows_correct_context(self):
         """Шаблон profile сформирован с правильным контекстом."""
         response = self.authorized_client.get(self.profile_reverse)
         for item, expected in self._get_first_object_(response).items():
             with self.subTest(item=item):
-                self.assertEqual(item, expected)
+                return self.assertEqual(item, expected)
         page_context = {
             'username': self.user.username,
             'post_count': self.user.posts.count(),
@@ -104,15 +138,31 @@ class PagesTests(TestCase):
                 self.assertEqual(response.context.get(f'{item}'), expected)
 
     def test_post_detail_shows_correct_context(self):
-        """Шаблон post_detail сформирован с правильным контекстом."""
-        response = self.authorized_client.get(self.post_reverse)
+        self.authorized_client.post(
+            reverse('posts:post_create'),
+            data=self.form_data,
+            follow=True
+        )
+        added_post = Post.objects.all().first()
+        response = self.authorized_client.get(
+            reverse('posts:post_detail',
+                    kwargs={'post_id': f'{added_post.id}'}))
         page_context = {
-            'this_post': self.post,
-            'author_post_count': self.post.author.posts.count(),
+            'this_post': added_post,
+            'author_post_count': added_post.author.posts.count(),
         }
         for item, expected in page_context.items():
             with self.subTest(item=item):
                 self.assertEqual(response.context.get(f'{item}'), expected)
+        added_post_check_dict = {
+            page_context['this_post'].text: self.form_data['text'],
+            page_context['this_post'].group.pk: self.form_data['group'],
+            page_context['this_post'].author: self.form_data['author'],
+            page_context['this_post'].image: self.form_data['image'],
+        }
+        for expected, real in added_post_check_dict.items():
+            with self.subTest(expected=expected):
+                return self.assertEqual(expected, real)
 
     def test_create_post_shows_correct_context(self):
         """Ф-я post_create передаёт в шаблон create_post верный контекст."""
