@@ -87,7 +87,7 @@ class PostCreateFormTests(TestCase):
             added_post.text: self.form_data['text'],
             added_post.group.pk: self.form_data['group'],
             added_post.author: self.form_data['author'],
-            added_post.image: self.form_data['image'],
+            added_post.image: 'posts/' + self.uploaded.name,
         }
         self.assertRedirects(response, reverse('posts:profile',
                              kwargs={'username':
@@ -95,7 +95,7 @@ class PostCreateFormTests(TestCase):
         self.assertEqual(Post.objects.count(), post_count + 1)
         for expected, real in added_post_check_dict.items():
             with self.subTest(expected=expected):
-                return self.assertEqual(expected, real)
+                self.assertEqual(expected, real)
 
     def test_edit_post_authorized(self):
         response = self.authorized_client.post(

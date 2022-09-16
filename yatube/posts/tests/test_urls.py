@@ -23,14 +23,6 @@ class URLTests(TestCase):
             text='Тестовый текст',
             author=cls.user
         )
-        cls.templates_url_names = {
-            '/': 'posts/index.html',
-            f'/group/{cls.group.slug}/': 'posts/group_list.html',
-            f'/profile/{cls.post.author}/': 'posts/profile.html',
-            f'/posts/{cls.post.id}/': 'posts/post_detail.html',
-            '/create/': 'posts/create_post.html',
-            f'/posts/{cls.post.id}/edit/': 'posts/create_post.html',
-        }
         cls.index_url = '/'
         cls.group_url = f'/group/{cls.group.slug}/'
         cls.profile_url = f'/profile/{cls.post.author}/'
