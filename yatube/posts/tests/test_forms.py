@@ -8,7 +8,7 @@ from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from posts.forms import PostForm
-from posts.models import Group, Post
+from posts.models import Group, Post, Comment
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
@@ -31,6 +31,11 @@ class PostCreateFormTests(TestCase):
             author=cls.user,
             group=cls.group,
             image=''
+        )
+        cls.comment = Comment.objects.create(
+            text='Тестовый коммент',
+            post=cls.post,
+            author=cls.user
         )
         cls.form = PostForm()
 
@@ -131,3 +136,16 @@ class PostCreateFormTests(TestCase):
                              + reverse('posts:post_edit',
                              kwargs={'post_id': f'{self.post.id}'}))
         self.assertEqual(Post.objects.count(), post_count)
+
+    def test_create_comment_authorized(self):
+        comment_count = Comment.objects.count()
+        response = self.authorized_client.post(
+            reverse('posts:add_comment', kwargs={'post_id': f'{self.post.id}'}),
+            data={'text': 'Новый тестовый коммент'},
+            follow=True
+        )
+        added_comment = Comment.objects.all().first()
+        self.assertEqual(Comment.objects.count(), comment_count + 1)
+        self.assertEqual(added_comment.text, 'Новый тестовый коммент')
+        self.assertRedirects(response, reverse('posts:post_detail',
+                             kwargs={'post_id': self.post.id}))

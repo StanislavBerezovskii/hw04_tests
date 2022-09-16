@@ -29,9 +29,11 @@ class URLTests(TestCase):
         cls.post_url = f'/posts/{cls.post.id}/'
         cls.create_url = '/create/'
         cls.edit_url = f'/posts/{cls.post.id}/edit/'
+        cls.comment_url = f'/posts/{cls.post.id}/comment/'
         cls.free_access_url_list = [cls.index_url, cls.group_url,
                                     cls.profile_url, cls.post_url]
-        cls.restricted_access_url_list = [cls.create_url, cls.edit_url]
+        cls.restricted_access_url_list = [cls.create_url,
+                                          cls.edit_url]
         cls.free_access_page_templates = ['posts/index.html',
                                           'posts/group_list.html',
                                           'posts/profile.html',
@@ -60,6 +62,8 @@ class URLTests(TestCase):
             with self.subTest(url=url):
                 response = self.authorized_client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
+        response = self.authorized_client.get(self.comment_url)
+        self.assertRedirects(response, self.post_url)
 
     def test_restricted_access_pages_redirect(self):
         """Страницы /create/ и /posts/<post_id>/edit/> перенаправляют
@@ -68,6 +72,8 @@ class URLTests(TestCase):
             with self.subTest(url=url):
                 response = self.guest_client.get(url, follow=True)
                 self.assertRedirects(response, f'/auth/login/?next={url}')
+        response = self.guest_client.get(self.comment_url)
+        self.assertRedirects(response, f'/auth/login/?next={self.comment_url}')
 
     def test_create_redirects_not_author(self):
         """Страница /posts/<post_id>/edit/> перенаправляет

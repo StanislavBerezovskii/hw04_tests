@@ -10,7 +10,7 @@ import tempfile
 
 import math
 
-from ..models import Post, Group
+from ..models import Post, Group, Comment
 from ..forms import PostForm
 
 User = get_user_model()
@@ -48,6 +48,11 @@ class PagesTests(TestCase):
             author=cls.user,
             group=cls.group,
             image=cls.uploaded
+        )
+        cls.comment = Comment.objects.create(
+            text='Тестовый коммент',
+            post=cls.post,
+            author=cls.user
         )
         cls.index_reverse = reverse('posts:index')
         cls.group_reverse = reverse('posts:group_list',
@@ -149,6 +154,8 @@ class PagesTests(TestCase):
         for expected, real in post_check_dict.items():
             with self.subTest(expected=expected):
                 self.assertEqual(expected, real)
+        first_comment = response.context.get('page_obj').object_list[0]
+        self.assertEqual(first_comment.text, self.comment.text)
 
     def test_create_post_shows_correct_context(self):
         """Ф-я post_create передаёт в шаблон create_post верный контекст."""
