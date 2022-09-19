@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase, Client
+from django.core.cache import cache
 
 from http import HTTPStatus
 
@@ -45,6 +46,7 @@ class URLTests(TestCase):
         self.guest_client = Client()
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
+        cache.clear()
 
     # Проверяем общедоступные страницы
     def test_free_access_pages(self):

@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from django.conf import settings as s
+from django.core.cache import cache
 
 import shutil
 import tempfile
@@ -87,6 +88,7 @@ class PagesTests(TestCase):
         self.guest_client = Client()
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
+        cache.clear()
 
     def _get_first_object_(self, response):
         first_object = response.context.get('page_obj').object_list[0]
@@ -139,17 +141,17 @@ class PagesTests(TestCase):
     def test_post_detail_shows_correct_context(self):
         response = self.authorized_client.get(self.post_reverse)
         page_context = {
-            'this_post': self.post,
+            'post': self.post,
             'author_post_count': self.post.author.posts.count(),
         }
         for item, expected in page_context.items():
             with self.subTest(item=item):
                 self.assertEqual(response.context.get(f'{item}'), expected)
         post_check_dict = {
-            page_context['this_post'].text: self.post.text,
-            page_context['this_post'].group: self.post.group,
-            page_context['this_post'].author: self.post.author,
-            page_context['this_post'].image: self.post.image,
+            page_context['post'].text: self.post.text,
+            page_context['post'].group: self.post.group,
+            page_context['post'].author: self.post.author,
+            page_context['post'].image: self.post.image,
         }
         for expected, real in post_check_dict.items():
             with self.subTest(expected=expected):
