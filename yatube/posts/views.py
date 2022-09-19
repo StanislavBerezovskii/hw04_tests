@@ -53,7 +53,7 @@ def post_detail(request, post_id):
     form = CommentForm(request.POST or None)
     comments = Comment.objects.filter(post=this_post.id)
     context = {
-        'this_post': this_post,
+        'post': this_post,
         'author_post_count': author_post_count,
         'form': form,
         'page_obj': pagination(request, comments)

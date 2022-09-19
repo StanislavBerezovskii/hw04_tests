@@ -140,7 +140,9 @@ class PostCreateFormTests(TestCase):
     def test_create_comment_authorized(self):
         comment_count = Comment.objects.count()
         response = self.authorized_client.post(
-            reverse('posts:add_comment', kwargs={'post_id': f'{self.post.id}'}),
+            reverse(
+                'posts:add_comment',
+                kwargs={'post_id': f'{self.post.id}'}),
             data={'text': 'Новый тестовый коммент'},
             follow=True
         )
