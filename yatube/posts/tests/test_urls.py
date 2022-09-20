@@ -110,3 +110,12 @@ class URLTests(TestCase):
         url = '/unexisting_page/'
         response = self.client.get(url)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+
+    def test_custom_error_pages(self):
+        """При запросе неусществующего URL-адреса
+        срабатывает наша ошибка 404."""
+        url = '/unexisting_page/'
+        response = self.client.get(url)
+        self.assertTemplateUsed(response, 'core/404.html')
+        response = self.guest_client.get(self.create_url)
+        self.assertTemplateUsed(response, 'core/403csrf.html')
