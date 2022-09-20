@@ -172,6 +172,24 @@ class PagesTests(TestCase):
         self.assertEqual(response.context.get('is_edit'), True)
         self.assertEqual(response.context.get('post'), self.post)
 
+    def test_index_cache(self):
+        temp_post = Post.objects.create(
+            author=self.user,
+            group=self.group,
+            text='Пост на удаление для проверки кэширования.'
+        )
+        responce = self.authorized_client.get(self.index_reverse).content
+        temp_post.delete()
+        self.assertEqual(
+            responce,
+            self.authorized_client.get(self.index_reverse).content
+        )
+        cache.clear()
+        self.assertNotEqual(
+            responce,
+            self.authorized_client.get(self.index_reverse).content
+        )
+
 
 class PaginatorViewsTest(TestCase):
     @classmethod
