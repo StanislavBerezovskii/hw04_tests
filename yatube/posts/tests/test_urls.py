@@ -117,5 +117,3 @@ class URLTests(TestCase):
         url = '/unexisting_page/'
         response = self.client.get(url)
         self.assertTemplateUsed(response, 'core/404.html')
-        response = self.guest_client.get(self.create_url)
-        self.assertTemplateUsed(response, 'core/403csrf.html')
