@@ -11,7 +11,7 @@ import tempfile
 
 import math
 
-from ..models import Post, Group, Comment
+from ..models import Post, Group, Comment, Follow
 from ..forms import PostForm
 
 User = get_user_model()
@@ -55,6 +55,7 @@ class PagesTests(TestCase):
             post=cls.post,
             author=cls.user
         )
+        cls.author = User.objects.create_user(username='TestAuthor')
         cls.index_reverse = reverse('posts:index')
         cls.group_reverse = reverse('posts:group_list',
                                     kwargs={'slug': f'{cls.group.slug}'})
@@ -189,6 +190,15 @@ class PagesTests(TestCase):
             responce,
             self.authorized_client.get(self.index_reverse).content
         )
+
+    def test_follow_profile_creates_follows(self):
+        follow_count = Follow.objects.count()
+        response = self.authorized_client.post(
+            reverse('posts:profile_follow'),
+            data={'user': self.user, 'author': self.author},
+            follow=True
+        )
+        pass
 
 
 class PaginatorViewsTest(TestCase):
