@@ -56,6 +56,7 @@ class PagesTests(TestCase):
             author=cls.user
         )
         cls.author = User.objects.create_user(username='TestAuthor')
+
         cls.index_reverse = reverse('posts:index')
         cls.group_reverse = reverse('posts:group_list',
                                     kwargs={'slug': f'{cls.group.slug}'})
@@ -191,14 +192,75 @@ class PagesTests(TestCase):
             self.authorized_client.get(self.index_reverse).content
         )
 
-    def test_follow_profile_creates_follows(self):
+    def test_follow_unfollow_profile_create_and_delete_follows(self):
         follow_count = Follow.objects.count()
         response = self.authorized_client.post(
-            reverse('posts:profile_follow'),
-            data={'user': self.user, 'author': self.author},
+            reverse(
+                'posts:profile_follow',
+                kwargs={'username': f'{self.author.username}'}
+            ),
             follow=True
         )
-        pass
+        added_follow = Follow.objects.all().first()
+        added_folllow_check_dict = {
+            added_follow.user.pk: self.user.pk,
+            added_follow.author.pk: self.author.pk,
+        }
+        self.assertRedirects(response, reverse('posts:profile',
+                             kwargs={'username':
+                                     self.author.username}))
+        self.assertEqual(Follow.objects.count(), follow_count + 1)
+        for expected, real in added_folllow_check_dict.items():
+            with self.subTest(expected=expected):
+                self.assertEqual(expected, real)
+        response = self.authorized_client.post(
+            reverse(
+                'posts:profile_unfollow',
+                kwargs={'username': f'{self.author.username}'}
+            ),
+            follow=True
+        )
+        self.assertEqual(Follow.objects.count(), follow_count)
+        self.assertIsNone(Follow.objects.all().first())
+
+    def test_follow_objects_displayed_correctly(self):
+        """Шаблон index сформирован с правильным контекстом."""
+        self.authorized_client.post(
+            reverse(
+                'posts:profile_follow',
+                kwargs={'username': f'{self.author.username}'}
+            ),
+            follow=True
+        )
+        new_author_post = Post.objects.create(
+            text='Новый пост избранного автора',
+            author=self.author,
+            group=self.group,
+            image=self.uploaded
+        )
+        some_dude = User.objects.create_user(username='SomeDude')
+        new_some_dude_post = Post.objects.create(
+            text='Новый чужой пост',
+            author=some_dude,
+            group=self.group,
+            image=self.uploaded
+        )
+
+        response = self.authorized_client.get(reverse('posts:follow_index'))
+        first_object = response.context.get('page_obj').object_list[0]
+        first_object_fields = {
+            first_object.text: new_author_post.text,
+            first_object.author: new_author_post.author,
+            first_object.group: new_author_post.group,
+            first_object.image: new_author_post.image,
+        }
+        for item, expected in first_object_fields.items():
+            with self.subTest(item=item):
+                self.assertEqual(item, expected)
+        self.assertNotIn(
+            new_some_dude_post,
+            response.context.get('page_obj').object_list
+        )
 
 
 class PaginatorViewsTest(TestCase):
